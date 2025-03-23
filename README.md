@@ -7,14 +7,22 @@ MultiSSH is a powerful and lightweight tool that enables users to run commands, 
 - **Run Commands on Multiple Hosts**: Execute the same command on multiple servers concurrently.
 - **Parallel Execution**: Uses Goroutines to handle multiple SSH connections efficiently.
 - **Secure Authentication**: Supports both password and private key authentication.
+- **Configuration Management**: Supports JSON-based configuration.
 
 ## Features To Be Done
 - **File Transfer**: Upload or download files across multiple remote hosts.
-- **Configuration Management**: Supports JSON/YAML-based configuration.
+- **Configuration Management**: Supports YAML-based configuration.
 - **CLI and GUI Support**: Offers a command-line tool and an optional web-based UI.
 - **Container Deployment**: Easily deployable on Docker and Kubernetes.
 
 ## Usage
+Recommend to use
+```shell
+go run main.go -f <config_file>
+```
+- Set up either absolute private key path or password for each host in config file.
+
+Alternatively, use
 ```shell
 go run main.go -a <address> -u <username> -p <password> -k <key_path> -c <command>
 ```
