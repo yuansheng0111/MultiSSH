@@ -1,0 +1,18 @@
+{
+  "hosts": [
+    {
+      "address": "",
+      "user": "",
+      "key": "",
+      "password": "",
+      "command": ""
+    },
+    {
+      "address": "",
+      "user": "",
+      "key": "",
+      "password": "",
+      "command": ""
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 package ssh
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/yuansheng0111/MultiSSH/cmd"
@@ -18,7 +20,50 @@ type HostInfo struct {
 	Command  string
 }
 
+func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
+	var config map[string]interface{}
+	var hosts []HostInfo
+
+	if strings.HasSuffix(configFile, ".json") {
+		jsonData, err := os.ReadFile(configFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+		err = json.Unmarshal(jsonData, &config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse config file: %w", err)
+		}
+	} else if strings.HasSuffix(configFile, ".yml") {
+		return nil, fmt.Errorf("YAML config file format is not supported yet")
+	} else {
+		return nil, fmt.Errorf("invalid config file format: %s", configFile)
+	}
+
+	hostsConfig := config["hosts"].([]interface{})
+	for _, host := range hostsConfig {
+		hostInfo := host.(map[string]interface{})
+		host := HostInfo{}
+		host.Address = hostInfo["address"].(string) + ":22"
+		host.User = hostInfo["user"].(string)
+		if hostInfo["password"] != nil {
+			host.Password = hostInfo["password"].(string)
+		}
+		if hostInfo["key"] != nil {
+			host.KeyPath = hostInfo["key"].(string)
+		}
+		host.Command = hostInfo["command"].(string)
+
+		hosts = append(hosts, host)
+	}
+
+	return hosts, nil
+}
+
 func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
+	if config.FilePath != "" {
+		return BuildHostsFromConfigFile(config.FilePath)
+	}
+
 	hosts := []HostInfo{}
 	for id := range config.Address {
 		host := HostInfo{
@@ -65,6 +110,7 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 // runSSHCommand handles SSH connection and execution
 func runSSHCommand(host HostInfo) (string, error) {
 	// Setup SSH config
+	// fmt.Printf("host = %v\n", host)
 	var authMethods []ssh.AuthMethod
 	if host.KeyPath != "" {
 		privateKeyBytes, err := os.ReadFile(host.KeyPath)
@@ -87,7 +133,6 @@ func runSSHCommand(host HostInfo) (string, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	fmt.Println(host.Command)
 	// Connect to SSH
 	client, err := ssh.Dial("tcp", host.Address, config)
 	if err != nil {
