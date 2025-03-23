@@ -54,12 +54,17 @@ func main() {
 	hosts := []ssh.HostInfo{}
 	for id := range address {
 		host := ssh.HostInfo{
-			Address:  address[id] + ":22",
-			User:     username[id],
-			Password: password[id],
-			KeyPath:  "",
-			Command:  command[id],
+			Address: address[id] + ":22",
+			User:    username[id],
+			Command: command[id],
 		}
+
+		if len(password) > 0 {
+			host.Password = password[id]
+		} else {
+			host.KeyPath = keyPath[id]
+		}
+
 		hosts = append(hosts, host)
 	}
 

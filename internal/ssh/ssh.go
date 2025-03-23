@@ -2,6 +2,7 @@ package ssh
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"golang.org/x/crypto/ssh"
@@ -43,15 +44,25 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 // runSSHCommand handles SSH connection and execution
 func runSSHCommand(host HostInfo) (string, error) {
 	// Setup SSH config
-	// config, err := getSSHConfig(host)
-	// if err != nil {
-	// 	return "", err
-	// }
+	var authMethods []ssh.AuthMethod
+	if host.KeyPath != "" {
+		privateKeyBytes, err := os.ReadFile(host.KeyPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read SSH key: %w", err)
+		} else {
+			signer, err := ssh.ParsePrivateKey(privateKeyBytes)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse SSH key: %w", err)
+			}
+			authMethods = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+		}
+	} else {
+		authMethods = []ssh.AuthMethod{ssh.Password(host.Password)}
+	}
+
 	config := &ssh.ClientConfig{
-		User: host.User,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(host.Password),
-		},
+		User:            host.User,
+		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
