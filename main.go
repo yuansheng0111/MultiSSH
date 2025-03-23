@@ -17,22 +17,6 @@ func main() {
 	config.ParseFlags(rootCmd)
 	config.CheckFlags()
 
-	hosts := []ssh.HostInfo{}
-	for id := range config.Address {
-		host := ssh.HostInfo{
-			Address: config.Address[id] + ":22",
-			User:    config.Username[id],
-			Command: config.Command[id],
-		}
-
-		if len(config.Password) > 0 {
-			host.Password = config.Password[id]
-		} else {
-			host.KeyPath = config.KeyPath[id]
-		}
-
-		hosts = append(hosts, host)
-	}
-
+	hosts, _ := ssh.BuildHosts(config)
 	ssh.ExecuteCommandOnHosts(hosts)
 }

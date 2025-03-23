@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/yuansheng0111/MultiSSH/cmd"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -15,6 +16,26 @@ type HostInfo struct {
 	Password string
 	KeyPath  string // Path to private key
 	Command  string
+}
+
+func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
+	hosts := []HostInfo{}
+	for id := range config.Address {
+		host := HostInfo{
+			Address: config.Address[id] + ":22",
+			User:    config.Username[id],
+			Command: config.Command[id],
+		}
+
+		if len(config.Password) > 0 {
+			host.Password = config.Password[id]
+		} else {
+			host.KeyPath = config.KeyPath[id]
+		}
+
+		hosts = append(hosts, host)
+	}
+	return hosts, nil
 }
 
 // ExecuteCommandOnHosts runs a command on multiple hosts concurrently
