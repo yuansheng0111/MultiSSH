@@ -15,11 +15,13 @@ import (
 
 // HostInfo stores connection details for each host
 type HostInfo struct {
-	Address  string
-	User     string
-	Password string
-	KeyPath  string // Path to private key
-	Command  string
+	FileName       string
+	UploadFilePath string
+	Address        string
+	User           string
+	Password       string
+	KeyPath        string // Path to private key
+	Command        string
 }
 
 func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
@@ -61,8 +63,15 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 		if hostInfo["key"] != nil {
 			host.KeyPath = hostInfo["key"].(string)
 		}
-		host.Command = hostInfo["command"].(string)
-
+		if hostInfo["upload"] != nil {
+			host.UploadFilePath = hostInfo["upload"].(string)
+		}
+		if hostInfo["command"] != nil {
+			host.Command = hostInfo["command"].(string)
+		}
+		if hostInfo["name"] != nil {
+			host.FileName = hostInfo["name"].(string)
+		}
 		hosts = append(hosts, host)
 	}
 
@@ -79,13 +88,22 @@ func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
 		host := HostInfo{
 			Address: config.Address[id] + ":22",
 			User:    config.Username[id],
-			Command: config.Command[id],
 		}
 
 		if len(config.Password) > 0 {
 			host.Password = config.Password[id]
 		} else {
 			host.KeyPath = config.KeyPath[id]
+		}
+
+		if config.UploadFilePath != "" {
+			host.UploadFilePath = config.UploadFilePath
+		}
+		if config.Command != nil && len(config.Command) > 0 {
+			host.Command = config.Command[id]
+		}
+		if config.FileName != "" {
+			host.FileName = config.FileName
 		}
 
 		hosts = append(hosts, host)
@@ -119,37 +137,9 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 
 // runSSHCommand handles SSH connection and execution
 func runSSHCommand(host HostInfo) (string, error) {
-	// Setup SSH config
-	// fmt.Printf("host = %v\n", host)
-	var authMethods []ssh.AuthMethod
-	if host.KeyPath != "" {
-		privateKeyBytes, err := os.ReadFile(host.KeyPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to read SSH key: %w", err)
-		} else {
-			signer, err := ssh.ParsePrivateKey(privateKeyBytes)
-			if err != nil {
-				return "", fmt.Errorf("failed to parse SSH key: %w", err)
-			}
-			authMethods = []ssh.AuthMethod{ssh.PublicKeys(signer)}
-		}
-	} else {
-		authMethods = []ssh.AuthMethod{ssh.Password(host.Password)}
-	}
-
-	config := &ssh.ClientConfig{
-		User:            host.User,
-		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-
-	// Connect to SSH
-	client, err := ssh.Dial("tcp", host.Address, config)
+	client, err := NewSSHClient(host)
 	if err != nil {
-		fmt.Printf("failed to connect to %s: %w\n", host.Address, err)
-		return "", fmt.Errorf("failed to connect to %s: %w", host.Address, err)
-	} else {
-		fmt.Printf("Connected to %s\n", host.Address)
+		return "", fmt.Errorf("failed to create SSH client: %w", err)
 	}
 	defer client.Close()
 
@@ -168,4 +158,36 @@ func runSSHCommand(host HostInfo) (string, error) {
 
 	fmt.Println(string(output))
 	return string(output), nil
+}
+
+func NewSSHClient(host HostInfo) (*ssh.Client, error) {
+	var authMethods []ssh.AuthMethod
+
+	if host.KeyPath != "" {
+		privateKeyBytes, err := os.ReadFile(host.KeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read SSH key: %w", err)
+		}
+		signer, err := ssh.ParsePrivateKey(privateKeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse SSH key: %w", err)
+		}
+		authMethods = []ssh.AuthMethod{ssh.PublicKeys(signer)}
+	} else {
+		authMethods = []ssh.AuthMethod{ssh.Password(host.Password)}
+	}
+
+	config := &ssh.ClientConfig{
+		User:            host.User,
+		Auth:            authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh.Dial("tcp", host.Address, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial SSH: %w", err)
+	} else {
+		fmt.Printf("Connected to %s\n", host.Address)
+	}
+	return client, nil
 }
