@@ -8,12 +8,14 @@ import (
 )
 
 type Config struct {
-	FilePath string
-	Address  []string
-	Username []string
-	Password []string
-	KeyPath  []string
-	Command  []string
+	FileName       string
+	UploadFilePath string
+	FilePath       string
+	Address        []string
+	Username       []string
+	Password       []string
+	KeyPath        []string
+	Command        []string
 }
 
 func NewConfig() *Config {
@@ -21,6 +23,8 @@ func NewConfig() *Config {
 }
 
 func (c *Config) ParseFlags(rootCmd *cobra.Command) {
+	rootCmd.Flags().StringVarP(&c.FileName, "name", "", "", "File name")
+	rootCmd.Flags().StringVarP(&c.UploadFilePath, "upload-file", "", "", "Local file path to upload")
 	rootCmd.Flags().StringVarP(&c.FilePath, "file", "f", "", "Configuration file path")
 	rootCmd.Flags().StringArrayVarP(&c.Address, "address", "a", []string{}, "SSH host addresses")
 	rootCmd.Flags().StringArrayVarP(&c.Username, "user", "u", []string{}, "SSH usernames")

@@ -98,6 +98,7 @@ func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
 
 		if config.UploadFilePath != "" {
 			host.UploadFilePath = config.UploadFilePath
+			host.FileName = config.UploadFilePath
 		}
 		if config.Command != nil && len(config.Command) > 0 {
 			host.Command = config.Command[id]
@@ -142,6 +143,11 @@ func runSSHCommand(host HostInfo) (string, error) {
 		return "", fmt.Errorf("failed to create SSH client: %w", err)
 	}
 	defer client.Close()
+
+	if host.UploadFilePath != "" {
+		UploadFile(client, host.UploadFilePath, host.FileName)
+		return "", nil
+	}
 
 	// Create session
 	session, err := client.NewSession()
