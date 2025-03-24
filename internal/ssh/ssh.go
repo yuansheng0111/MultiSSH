@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/yuansheng0111/MultiSSH/cmd"
 	"golang.org/x/crypto/ssh"
 )
@@ -33,8 +35,16 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse config file: %w", err)
 		}
-	} else if strings.HasSuffix(configFile, ".yml") {
-		return nil, fmt.Errorf("YAML config file format is not supported yet")
+	} else if strings.HasSuffix(configFile, ".yaml") {
+		yamlData, err := os.ReadFile(configFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+
+		err = yaml.Unmarshal(yamlData, &config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse config file: %w", err)
+		}
 	} else {
 		return nil, fmt.Errorf("invalid config file format: %s", configFile)
 	}
