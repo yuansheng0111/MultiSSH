@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -10,7 +9,7 @@ import (
 type Config struct {
 	FileName       string
 	UploadFilePath string
-	FilePath       string
+	FilePath       string // Configuration file path
 	Address        []string
 	Username       []string
 	Password       []string
@@ -42,7 +41,7 @@ func (c *Config) ParseFlags(rootCmd *cobra.Command) {
 func (c *Config) CheckFlags() {
 	if c.FilePath != "" {
 		if c.Address != nil || c.Username != nil || c.Password != nil || c.KeyPath != nil || c.Command != nil {
-			fmt.Printf("address, username, password, key, and command flags will be ignored\n")
+			// fmt.Printf("address, username, password, key, and command flags will be ignored\n")
 			// log.Fatal("Please provide either configuration file or command line flags, but not both")
 			return
 		}

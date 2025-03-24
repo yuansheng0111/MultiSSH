@@ -63,14 +63,14 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 		if hostInfo["key"] != nil {
 			host.KeyPath = hostInfo["key"].(string)
 		}
-		if hostInfo["upload"] != nil {
-			host.UploadFilePath = hostInfo["upload"].(string)
+		if hostInfo["uploadfilepath"] != nil {
+			host.UploadFilePath = hostInfo["uploadfilepath"].(string)
 		}
 		if hostInfo["command"] != nil {
 			host.Command = hostInfo["command"].(string)
 		}
-		if hostInfo["name"] != nil {
-			host.FileName = hostInfo["name"].(string)
+		if hostInfo["filename"] != nil {
+			host.FileName = hostInfo["filename"].(string)
 		}
 		hosts = append(hosts, host)
 	}
@@ -120,14 +120,14 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 
 	for _, host := range hosts {
 		wg.Add(1)
-		go func(h HostInfo) {
+		go func(host HostInfo) {
 			defer wg.Done()
-			output, err := runSSHCommand(h)
+			output, err := runSSHCommand(host)
 			if err != nil {
 				output = fmt.Sprintf("Error: %v", err)
 			}
 			mu.Lock()
-			results[h.Address] = output
+			results[host.Address] = output
 			mu.Unlock()
 		}(host)
 	}
@@ -145,7 +145,10 @@ func runSSHCommand(host HostInfo) (string, error) {
 	defer client.Close()
 
 	if host.UploadFilePath != "" {
-		UploadFile(client, host.UploadFilePath, host.FileName)
+		err := UploadFile(client, host.UploadFilePath, host.FileName)
+		if err != nil {
+			return "", fmt.Errorf("failed to upload file: %w", err)
+		}
 		return "", nil
 	}
 
@@ -162,7 +165,6 @@ func runSSHCommand(host HostInfo) (string, error) {
 		return "", fmt.Errorf("command execution failed: %w", err)
 	}
 
-	fmt.Println(string(output))
 	return string(output), nil
 }
 

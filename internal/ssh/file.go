@@ -1,7 +1,6 @@
 package ssh
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -11,7 +10,6 @@ import (
 
 // UploadFile uploads a file to the remote server
 func UploadFile(client *ssh.Client, localFilePath string, remoteFilePath string) error {
-	fmt.Printf("Uploading file %s to %s\n", localFilePath, remoteFilePath)
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
 		return err
