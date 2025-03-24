@@ -20,7 +20,7 @@
 # Dependency directories
 vendor/
 
-# Build output directory
+# Build output directories
 build/
 
 # Log files
@@ -31,11 +31,14 @@ logs/
 tmp/
 *.tmp
 
-# Go workspace file
+# Go workspace files
 go.work
 go.work.sum
 
-# env file
+# Config files
+**/config/
+
+# env files
 .env
 
 test**
