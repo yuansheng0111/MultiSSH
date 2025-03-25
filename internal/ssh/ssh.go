@@ -15,13 +15,14 @@ import (
 
 // HostInfo stores connection details for each host
 type HostInfo struct {
-	FileName       string
-	UploadFilePath string
-	Address        string
-	User           string
-	Password       string
-	KeyPath        string // Path to private key
-	Command        string
+	FileName         string
+	UploadFilePath   string
+	DownloadFilePath string
+	Address          string
+	User             string
+	Password         string
+	KeyPath          string // Path to private key
+	Command          string
 }
 
 func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
@@ -66,6 +67,9 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 		if hostInfo["uploadfilepath"] != nil {
 			host.UploadFilePath = hostInfo["uploadfilepath"].(string)
 		}
+		if hostInfo["downloadfilepath"] != nil {
+			host.DownloadFilePath = hostInfo["downloadfilepath"].(string)
+		}
 		if hostInfo["command"] != nil {
 			host.Command = hostInfo["command"].(string)
 		}
@@ -99,6 +103,10 @@ func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
 		if config.UploadFilePath != "" {
 			host.UploadFilePath = config.UploadFilePath
 			host.FileName = config.UploadFilePath
+		}
+		if config.DownloadFilePath != "" {
+			host.DownloadFilePath = config.DownloadFilePath
+			host.FileName = config.DownloadFilePath
 		}
 		if config.Command != nil && len(config.Command) > 0 {
 			host.Command = config.Command[id]
@@ -148,6 +156,14 @@ func runSSHCommand(host HostInfo) (string, error) {
 		err := UploadFile(client, host.UploadFilePath, host.FileName)
 		if err != nil {
 			return "", fmt.Errorf("failed to upload file: %w", err)
+		}
+		return "", nil
+	}
+
+	if host.DownloadFilePath != "" {
+		err := DownloadFile(client, host.DownloadFilePath, host.FileName)
+		if err != nil {
+			return "", fmt.Errorf("failed to download file: %w", err)
 		}
 		return "", nil
 	}
