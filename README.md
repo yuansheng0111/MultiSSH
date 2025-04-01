@@ -8,10 +8,11 @@ MultiSSH is a powerful and lightweight tool that enables users to run commands, 
 - **Parallel Execution**: Uses Goroutines to handle multiple SSH connections efficiently.
 - **Secure Authentication**: Supports both password and private key authentication.
 - **Configuration Management**: Supports JSON and YAML configuration.
-- **File Transfer**: Upload single file through command line arguments.
+- **File Transfer**: 
+    - Upload single file to multiple hosts through command line arguments.
+    - Upload files to the specified host through config file.
 
 ## Features To Be Done
-- **Upload logic**: Upload from config files would cause errors.
 - **File Transfer**: Upload or download directories through command line arguments and config file.
 - **Container Deployment**: Easily deployable on Docker and Kubernetes.
 
