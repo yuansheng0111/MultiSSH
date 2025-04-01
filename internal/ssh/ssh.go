@@ -55,28 +55,28 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 	hostsConfig := config["hosts"].([]interface{})
 	for _, host := range hostsConfig {
 		hostInfo := host.(map[string]interface{})
-		host := HostInfo{}
-		host.Address = hostInfo["address"].(string) + ":22"
-		host.User = hostInfo["user"].(string)
+		hostData := HostInfo{}
+		hostData.Address = hostInfo["address"].(string) + ":22"
+		hostData.User = hostInfo["user"].(string)
 		if hostInfo["password"] != nil {
-			host.Password = hostInfo["password"].(string)
+			hostData.Password = hostInfo["password"].(string)
 		}
 		if hostInfo["key"] != nil {
-			host.KeyPath = hostInfo["key"].(string)
+			hostData.KeyPath = hostInfo["key"].(string)
 		}
 		if hostInfo["uploadfilepath"] != nil {
-			host.UploadFilePath = hostInfo["uploadfilepath"].(string)
+			hostData.UploadFilePath = hostInfo["uploadfilepath"].(string)
 		}
 		if hostInfo["downloadfilepath"] != nil {
-			host.DownloadFilePath = hostInfo["downloadfilepath"].(string)
+			hostData.DownloadFilePath = hostInfo["downloadfilepath"].(string)
 		}
 		if hostInfo["command"] != nil {
-			host.Command = hostInfo["command"].(string)
+			hostData.Command = hostInfo["command"].(string)
 		}
 		if hostInfo["filename"] != nil {
-			host.FileName = hostInfo["filename"].(string)
+			hostData.FileName = hostInfo["filename"].(string)
 		}
-		hosts = append(hosts, host)
+		hosts = append(hosts, hostData)
 	}
 
 	return hosts, nil
@@ -123,6 +123,7 @@ func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
 // ExecuteCommandOnHosts runs a command on multiple hosts concurrently
 func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 	results := make(map[string]string) // Store output
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex // Prevent race conditions
 
@@ -153,6 +154,7 @@ func runSSHCommand(host HostInfo) (string, error) {
 	defer client.Close()
 
 	if host.UploadFilePath != "" {
+		fmt.Printf("%s: Uploading file from %s as %s\n", host.Address, host.UploadFilePath, host.FileName)
 		err := UploadFile(client, host.UploadFilePath, host.FileName)
 		if err != nil {
 			return "", fmt.Errorf("failed to upload file: %w", err)
@@ -161,6 +163,7 @@ func runSSHCommand(host HostInfo) (string, error) {
 	}
 
 	if host.DownloadFilePath != "" {
+		fmt.Printf("Downloading file from %s as %s\n", host.DownloadFilePath, host.FileName)
 		err := DownloadFile(client, host.DownloadFilePath, host.FileName)
 		if err != nil {
 			return "", fmt.Errorf("failed to download file: %w", err)
@@ -210,8 +213,6 @@ func NewSSHClient(host HostInfo) (*ssh.Client, error) {
 	client, err := ssh.Dial("tcp", host.Address, config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial SSH: %w", err)
-	} else {
-		fmt.Printf("Connected to %s\n", host.Address)
 	}
 	return client, nil
 }

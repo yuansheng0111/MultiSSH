@@ -11,29 +11,35 @@ import (
 
 // Upload a file to the remote server
 func UploadFile(client *ssh.Client, localFilePath string, remoteFilePath string) error {
-	fmt.Printf("Uploading file from %s as %s\n", localFilePath, remoteFilePath)
+	// Get remote address information for debugging
+	// remoteAddr := client.RemoteAddr().String()
+	// localAddr := client.LocalAddr().String()
+	// fmt.Printf("[DEBUG] UploadFile called for connection from %s to %s\n", localAddr, remoteAddr)
+	// fmt.Printf("[DEBUG] Uploading file from %s to %s as %s\n", localFilePath, remoteAddr, remoteFilePath)
+
+	// Create a new SFTP client for this upload
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create SFTP client: %w", err)
 	}
 	defer sftpClient.Close()
 
 	localFile, err := os.Open(localFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open local file: %w", err)
 	}
 	defer localFile.Close()
 
 	remoteFile, err := sftpClient.Create(remoteFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create remote file: %w", err)
 	}
 	defer remoteFile.Close()
 
-	// Copy the file contents
+	// Copy the file contents from local to remote
 	_, err = io.Copy(remoteFile, localFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy file contents: %w", err)
 	}
 
 	return nil
@@ -41,7 +47,6 @@ func UploadFile(client *ssh.Client, localFilePath string, remoteFilePath string)
 
 // Download a file from the remote server
 func DownloadFile(client *ssh.Client, remoteFilePath string, localFilePath string) error {
-	fmt.Printf("Downloading file from %s as %s\n", remoteFilePath, localFilePath)
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {
 		return err
@@ -60,7 +65,7 @@ func DownloadFile(client *ssh.Client, remoteFilePath string, localFilePath strin
 	}
 	defer localFile.Close()
 
-	// Copy the file contents
+	// Copy the file contents from remote to local
 	_, err = io.Copy(localFile, remoteFile)
 	if err != nil {
 		return err
