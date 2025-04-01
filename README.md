@@ -13,7 +13,8 @@ MultiSSH is a powerful and lightweight tool that enables users to run commands, 
     - Upload files to the specified host through config file.
 
 ## Features To Be Done
-- **File Transfer**: Upload or download directories through command line arguments and config file.
+- **File Transfer**: Download directories through command line arguments.
+- **Execution Flow**: Clear execution flow.
 - **Container Deployment**: Easily deployable on Docker and Kubernetes.
 
 ## Usage
