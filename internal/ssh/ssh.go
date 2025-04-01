@@ -134,6 +134,7 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 			output, err := runSSHCommand(host)
 			if err != nil {
 				output = fmt.Sprintf("Error: %v", err)
+				fmt.Printf("Error on %s: %v\n", host.Address, err)
 			}
 			mu.Lock()
 			results[host.Address] = output
