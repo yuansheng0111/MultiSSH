@@ -160,7 +160,6 @@ func runSSHCommand(host HostInfo) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to upload file: %w", err)
 		}
-		return "", nil
 	}
 
 	if host.DownloadFilePath != "" {
@@ -169,23 +168,24 @@ func runSSHCommand(host HostInfo) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to download file: %w", err)
 		}
-		return "", nil
 	}
 
-	// Create session
-	session, err := client.NewSession()
-	if err != nil {
-		return "", fmt.Errorf("failed to create session: %w", err)
-	}
-	defer session.Close()
+	if host.Command != "" {
+		// Create session
+		session, err := client.NewSession()
+		if err != nil {
+			return "", fmt.Errorf("failed to create session: %w", err)
+		}
+		defer session.Close()
 
-	// Run command
-	output, err := session.CombinedOutput(host.Command)
-	if err != nil {
-		return "", fmt.Errorf("command execution failed: %w", err)
+		// Run command
+		output, err := session.CombinedOutput(host.Command)
+		if err != nil {
+			return "", fmt.Errorf("command execution failed: %w", err)
+		}
+		return string(output), nil
 	}
-
-	return string(output), nil
+	return "", nil
 }
 
 func NewSSHClient(host HostInfo) (*ssh.Client, error) {
