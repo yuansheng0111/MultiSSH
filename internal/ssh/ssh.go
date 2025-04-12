@@ -25,6 +25,32 @@ type HostInfo struct {
 	Command          string
 }
 
+func createHostInfo(hostInfo map[string]interface{}) HostInfo {
+	hostData := HostInfo{}
+	hostData.Address = hostInfo["address"].(string) + ":22"
+	hostData.User = hostInfo["user"].(string)
+	if hostInfo["password"] != nil {
+		hostData.Password = hostInfo["password"].(string)
+	}
+	if hostInfo["key"] != nil {
+		hostData.KeyPath = hostInfo["key"].(string)
+	}
+	if hostInfo["uploadfilepath"] != nil {
+		hostData.UploadFilePath = hostInfo["uploadfilepath"].(string)
+	}
+	if hostInfo["downloadfilepath"] != nil {
+		hostData.DownloadFilePath = hostInfo["downloadfilepath"].(string)
+	}
+	if hostInfo["command"] != nil {
+		hostData.Command = hostInfo["command"].(string)
+	}
+	if hostInfo["filename"] != nil {
+		hostData.FileName = hostInfo["filename"].(string)
+	}
+
+	return hostData
+}
+
 func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 	var config map[string]interface{}
 	var hosts []HostInfo
@@ -55,27 +81,7 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 	hostsConfig := config["hosts"].([]interface{})
 	for _, host := range hostsConfig {
 		hostInfo := host.(map[string]interface{})
-		hostData := HostInfo{}
-		hostData.Address = hostInfo["address"].(string) + ":22"
-		hostData.User = hostInfo["user"].(string)
-		if hostInfo["password"] != nil {
-			hostData.Password = hostInfo["password"].(string)
-		}
-		if hostInfo["key"] != nil {
-			hostData.KeyPath = hostInfo["key"].(string)
-		}
-		if hostInfo["uploadfilepath"] != nil {
-			hostData.UploadFilePath = hostInfo["uploadfilepath"].(string)
-		}
-		if hostInfo["downloadfilepath"] != nil {
-			hostData.DownloadFilePath = hostInfo["downloadfilepath"].(string)
-		}
-		if hostInfo["command"] != nil {
-			hostData.Command = hostInfo["command"].(string)
-		}
-		if hostInfo["filename"] != nil {
-			hostData.FileName = hostInfo["filename"].(string)
-		}
+		hostData := createHostInfo(hostInfo)
 		hosts = append(hosts, hostData)
 	}
 
