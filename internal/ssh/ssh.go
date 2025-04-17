@@ -3,9 +3,11 @@ package ssh
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -23,6 +25,10 @@ type HostInfo struct {
 	Password         string
 	KeyPath          string // Path to private key
 	Command          string
+}
+
+func init() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
 func createHostInfo(hostInfo map[string]interface{}) HostInfo {
@@ -139,7 +145,6 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 			defer wg.Done()
 			output, err := runSSHCommand(host)
 			if err != nil {
-				output = fmt.Sprintf("Error: %v", err)
 				fmt.Printf("Error on %s: %v\n", host.Address, err)
 			}
 			mu.Lock()
@@ -154,6 +159,7 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 
 // runSSHCommand handles SSH connection and execution
 func runSSHCommand(host HostInfo) (string, error) {
+	log.Printf("Connecting to host: %s", host.Address)
 	client, err := NewSSHClient(host)
 	if err != nil {
 		return "", fmt.Errorf("failed to create SSH client: %w", err)
@@ -161,7 +167,7 @@ func runSSHCommand(host HostInfo) (string, error) {
 	defer client.Close()
 
 	if host.UploadFilePath != "" {
-		fmt.Printf("%s: Uploading file from %s as %s\n", host.Address, host.UploadFilePath, host.FileName)
+		log.Printf("Uploading file to host %s: %s", host.Address, host.UploadFilePath)
 		err := UploadFile(client, host.UploadFilePath, host.FileName)
 		if err != nil {
 			return "", fmt.Errorf("failed to upload file: %w", err)
@@ -169,7 +175,7 @@ func runSSHCommand(host HostInfo) (string, error) {
 	}
 
 	if host.DownloadFilePath != "" {
-		fmt.Printf("Downloading file from %s as %s\n", host.DownloadFilePath, host.FileName)
+		log.Printf("Downloading file from host %s: %s", host.DownloadFilePath, host.FileName)
 		err := DownloadFile(client, host.DownloadFilePath, host.FileName)
 		if err != nil {
 			return "", fmt.Errorf("failed to download file: %w", err)
@@ -177,6 +183,7 @@ func runSSHCommand(host HostInfo) (string, error) {
 	}
 
 	if host.Command != "" {
+		log.Printf("Executing command on host %s: %s", host.Address, host.Command)
 		// Create session
 		session, err := client.NewSession()
 		if err != nil {
@@ -215,6 +222,7 @@ func NewSSHClient(host HostInfo) (*ssh.Client, error) {
 		User:            host.User,
 		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         10 * time.Second,
 	}
 
 	client, err := ssh.Dial("tcp", host.Address, config)
