@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/pkg/sftp"
+	"github.com/schollz/progressbar/v3"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -36,8 +37,18 @@ func UploadFile(client *ssh.Client, localFilePath string, remoteFilePath string)
 	}
 	defer remoteFile.Close()
 
+	fileInfo, err := localFile.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat local file: %w", err)
+	}
+	// Create a progress bar
+	bar := progressbar.DefaultBytes(
+		fileInfo.Size(),
+		"uploading",
+	)
+
 	// Copy the file contents from local to remote
-	_, err = io.Copy(remoteFile, localFile)
+	_, err = io.Copy(io.MultiWriter(remoteFile, bar), localFile)
 	if err != nil {
 		return fmt.Errorf("failed to copy file contents: %w", err)
 	}

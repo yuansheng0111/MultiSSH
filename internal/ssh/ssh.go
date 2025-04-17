@@ -54,6 +54,14 @@ func createHostInfo(hostInfo map[string]interface{}) HostInfo {
 		hostData.FileName = hostInfo["filename"].(string)
 	}
 
+	if hostData.FileName == "" {
+		if hostData.UploadFilePath != "" {
+			hostData.FileName = hostData.UploadFilePath
+		} else if hostData.DownloadFilePath != "" {
+			hostData.FileName = hostData.DownloadFilePath
+		}
+	}
+
 	return hostData
 }
 
@@ -88,7 +96,9 @@ func BuildHostsFromConfigFile(configFile string) ([]HostInfo, error) {
 	for _, host := range hostsConfig {
 		hostInfo := host.(map[string]interface{})
 		hostData := createHostInfo(hostInfo)
-		hosts = append(hosts, hostData)
+		if hostData.User != "" {
+			hosts = append(hosts, hostData)
+		}
 	}
 
 	return hosts, nil
