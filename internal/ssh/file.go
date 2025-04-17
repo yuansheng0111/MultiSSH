@@ -12,12 +12,6 @@ import (
 
 // Upload a file to the remote server
 func UploadFile(client *ssh.Client, localFilePath string, remoteFilePath string) error {
-	// Get remote address information for debugging
-	// remoteAddr := client.RemoteAddr().String()
-	// localAddr := client.LocalAddr().String()
-	// fmt.Printf("[DEBUG] UploadFile called for connection from %s to %s\n", localAddr, remoteAddr)
-	// fmt.Printf("[DEBUG] Uploading file from %s to %s as %s\n", localFilePath, remoteAddr, remoteFilePath)
-
 	// Create a new SFTP client for this upload
 	sftpClient, err := sftp.NewClient(client)
 	if err != nil {

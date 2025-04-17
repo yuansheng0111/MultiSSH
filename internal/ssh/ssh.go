@@ -144,10 +144,8 @@ func BuildHosts(config *cmd.Config) ([]HostInfo, error) {
 
 // ExecuteCommandOnHosts runs a command on multiple hosts concurrently
 func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
-	results := make(map[string]string) // Store output
-
+	var results sync.Map
 	var wg sync.WaitGroup
-	var mu sync.Mutex // Prevent race conditions
 
 	for _, host := range hosts {
 		wg.Add(1)
@@ -157,14 +155,19 @@ func ExecuteCommandOnHosts(hosts []HostInfo) map[string]string {
 			if err != nil {
 				fmt.Printf("Error on %s: %v\n", host.Address, err)
 			}
-			mu.Lock()
-			results[host.Address] = output
-			mu.Unlock()
+			results.Store(host.Address, output)
 		}(host)
 	}
 
 	wg.Wait() // Wait for all goroutines to finish
-	return results
+
+	finalResults := make(map[string]string)
+	results.Range(func(key, value interface{}) bool {
+		finalResults[key.(string)] = value.(string)
+		return true
+	})
+
+	return finalResults
 }
 
 // runSSHCommand handles SSH connection and execution
